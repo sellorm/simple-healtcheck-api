@@ -1,0 +1,89 @@
+<html>
+<head>
+    <title>Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://rawgit.com/kimmobrunfeldt/progressbar.js/1.0.0/dist/progressbar.js"></script>
+    <style>
+    #cpucontainer {
+        margin: 20px;
+        width: 200px;
+        height: 100px;
+    }
+    #ramcontainer {
+        margin: 20px;
+        width: 200px;
+        height: 100px;
+    }
+    </style>
+
+</head>
+
+<body onload="updatePage();">
+    <h1>{{ .Title }}</h1>
+    <!-- <div id="content"></div> -->
+    <div id="cpucontainer"></div>
+    <div id="ramcontainer"></div>
+
+                        <script>
+                                console.log("javascript is running");
+                        
+                                async function fetchAsync() {
+                                    console.log('fetching data');
+                                    let response = await fetch('http://localhost:1234/__healthcheck__');
+                                    let data = await response.json();
+                                    console.log(data);
+                                    return data;
+                                }
+                        
+                                // draws the dashboard instrument
+                                // instName - a friendly name for the instrument
+                                // instValue - 0.0-1.0 value for the instrument to display
+                                // divId - id of the div to draw it in
+                                // elementId - same as the div but in quotes
+                                function drawInstrument(instName, instValue, divId, elementId){
+                                    document.getElementById(elementId).innerHTML = "";
+                                    var bar = new ProgressBar.SemiCircle(divId, {
+                                      strokeWidth: 6,
+                                      color: '#FFEA82',
+                                      trailColor: '#eee',
+                                      trailWidth: 1,
+                                      easing: null,
+                                      svgStyle: null,
+                                      text: {
+                                        value: '87',
+                                        alignToBottom: false
+                                      },
+                                      from: {color: '#FFEA82'},
+                                      to: {color: '#ED6A5A'},
+                                      // Set default step function for all animate calls
+                                      step: (state, bar) => {
+                                        bar.path.setAttribute('stroke', state.color);
+                                        var value = Math.round(bar.value() * 100);
+                                        if (value === 0) {
+                                          bar.setText('');
+                                        } else {
+                                          bar.setText(instName + ":" + value + "%");
+                                        }
+                                    
+                                        bar.text.style.color = state.color;
+                                      }
+                                    });
+                                    bar.text.style.fontFamily = '"Raleway", Helvetica, sans-serif';
+                                    bar.text.style.fontSize = '2rem';
+                                    
+                                    bar.set(instValue);  // Number from 0.0 to 1.0
+                                    }
+                        
+                                function updatePage() {
+                                    console.log("updating page");
+                                    fetchAsync().then(data => {
+                                        //document.getElementById('content').innerHTML = data.mem
+                                        drawInstrument("RAM", data.mem/100, ramcontainer, "ramcontainer")
+                                        drawInstrument("CPU", data.cpu/100, cpucontainer, "cpucontainer")
+                                    }).catch(err => console.log(err))
+                                    setTimeout(e => { updatePage(); }, 10000);
+                                }
+                            </script>
+            
+</body>
+</html>
